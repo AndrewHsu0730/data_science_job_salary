@@ -193,37 +193,12 @@ FROM
 GROUP BY work_year;
 
 SELECT
-	*,
-    CASE
-		WHEN salary_difference > 0 THEN "T"
-        WHEN salary_difference < 0 THEN "F"
-        ELSE "-"
-	END AS salary_increasing
+	work_year,
+    ROUND(AVG(salary_in_usd)) AS salary
 FROM
-	(SELECT
-		work_year,
-		job_title,
-		ROUND(AVG(salary_in_usd)) AS salary,
-		LAG(ROUND(AVG(salary_in_usd))) OVER (PARTITION BY job_title ORDER BY work_year) AS previous_salary,
-		ROUND(AVG(salary_in_usd))-LAG(ROUND(AVG(salary_in_usd))) OVER (PARTITION BY job_title ORDER BY work_year) AS salary_difference
-	FROM
-		data_science_job_salary
-	/*WHERE job_title IN
-		(SELECT
-			job_title
-		FROM
-			(SELECT
-				work_year,
-				job_title
-			FROM
-				data_science_job_salary
-			GROUP BY work_year, job_title
-			ORDER BY job_title, work_year) year_and_job_grouped
-		GROUP BY job_title
-		HAVING COUNT(job_title) = 3)*/
-	GROUP BY work_year, job_title
-	ORDER BY job_title, work_year) salary_difference
-/*UNION
+	data_science_job_salary
+GROUP BY work_year;
+
 SELECT
 	*,
     CASE
@@ -240,21 +215,8 @@ FROM
 		ROUND(AVG(salary_in_usd))-LAG(ROUND(AVG(salary_in_usd))) OVER (PARTITION BY job_title ORDER BY work_year) AS salary_difference
 	FROM
 		data_science_job_salary
-	WHERE job_title IN
-		(SELECT
-			job_title
-		FROM
-			(SELECT
-				work_year,
-				job_title
-			FROM
-				data_science_job_salary
-			GROUP BY work_year, job_title
-			ORDER BY job_title, work_year) year_and_job_grouped
-		GROUP BY job_title
-		HAVING COUNT(job_title) = 2)
 	GROUP BY work_year, job_title
-	ORDER BY job_title, work_year) salary_difference*/;
+	ORDER BY job_title, work_year) salary_difference;
 
 SELECT
 	salary_increasing,
@@ -276,59 +238,43 @@ FROM
 			ROUND(AVG(salary_in_usd))-LAG(ROUND(AVG(salary_in_usd))) OVER (PARTITION BY job_title ORDER BY work_year) AS salary_difference
 		FROM
 			data_science_job_salary
-		/*WHERE job_title IN
-			(SELECT
-				job_title
-			FROM
-				(SELECT
-					work_year,
-					job_title
-				FROM
-					data_science_job_salary
-				GROUP BY work_year, job_title
-				ORDER BY job_title, work_year) year_and_job_grouped
-			GROUP BY job_title
-			HAVING COUNT(job_title) = 3)*/
 		GROUP BY work_year, job_title
-		ORDER BY job_title, work_year) salary_difference
-	/*UNION
-	SELECT
-		*,
-		CASE
-			WHEN salary_difference > 0 THEN "T"
-			WHEN salary_difference < 0 THEN "F"
-			ELSE "-"
-		END AS salary_increasing
-	FROM
-		(SELECT
-			work_year,
-			job_title,
-			ROUND(AVG(salary_in_usd)) AS salary,
-			LAG(ROUND(AVG(salary_in_usd))) OVER (PARTITION BY job_title ORDER BY work_year) AS previous_salary,
-			ROUND(AVG(salary_in_usd))-LAG(ROUND(AVG(salary_in_usd))) OVER (PARTITION BY job_title ORDER BY work_year) AS salary_difference
-		FROM
-			data_science_job_salary
-		WHERE job_title IN
-			(SELECT
-				job_title
-			FROM
-				(SELECT
-					work_year,
-					job_title
-				FROM
-					data_science_job_salary
-				GROUP BY work_year, job_title
-				ORDER BY job_title, work_year) year_and_job_grouped
-			GROUP BY job_title
-			HAVING COUNT(job_title) = 2)
-		GROUP BY work_year, job_title
-		ORDER BY job_title, work_year) salary_difference*/) salary_trend
+		ORDER BY job_title, work_year) salary_difference) salary_trend
+WHERE salary_increasing <> "-"
 GROUP BY salary_increasing
 ORDER BY salary_increasing DESC;
 
 
 
 #Q2: Is it true that the higher experience level employees have, the more they're paid in different job roles?
+
+SELECT
+	experience_level,
+    COUNT(experience_level)
+FROM
+	data_science_job_salary
+GROUP BY experience_level
+ORDER BY
+	CASE
+		WHEN experience_level = "EN" THEN 1
+        WHEN experience_level = "MI" THEN 2
+        WHEN experience_level = "SE" THEN 3
+		ELSE 4
+	END;
+    
+SELECT
+	experience_level,
+    ROUND(AVG(salary_in_usd))
+FROM
+	data_science_job_salary
+GROUP BY experience_level
+ORDER BY
+	CASE
+		WHEN experience_level = "EN" THEN 1
+        WHEN experience_level = "MI" THEN 2
+        WHEN experience_level = "SE" THEN 3
+        ELSE 4
+	END;
 
 SELECT
 	*,
@@ -369,6 +315,52 @@ FROM
 			WHEN experience_level = "SE" THEN 3
 			ELSE 4
 		END) salary_difference;
+        
+SELECT
+	salary_increasing,
+    COUNT(salary_increasing)
+FROM
+	(SELECT
+		*,
+		CASE
+			WHEN salary_difference > 0 THEN "T"
+			WHEN salary_difference < 0 THEN "F"
+			ELSE "-"
+		END AS salary_increasing
+	FROM	
+		(SELECT
+			job_title,
+			experience_level,
+			ROUND(AVG(salary_in_usd)) AS salary,
+			LAG(ROUND(AVG(salary_in_usd))) OVER (PARTITION BY job_title ORDER BY
+			CASE
+				WHEN experience_level = "EN" THEN 1
+				WHEN experience_level = "MI" THEN 2
+				WHEN experience_level = "SE" THEN 3
+				ELSE 4
+			END) AS salary_in_previous_level,
+			ROUND(AVG(salary_in_usd))-LAG(ROUND(AVG(salary_in_usd))) OVER (PARTITION BY job_title ORDER BY
+			CASE
+				WHEN experience_level = "EN" THEN 1
+				WHEN experience_level = "MI" THEN 2
+				WHEN experience_level = "SE" THEN 3
+				ELSE 4
+			END) AS salary_difference
+		FROM
+			data_science_job_salary
+		GROUP BY 
+			job_title,
+			experience_level
+		ORDER BY 
+			job_title,
+			CASE
+				WHEN experience_level = "EN" THEN 1
+				WHEN experience_level = "MI" THEN 2
+				WHEN experience_level = "SE" THEN 3
+				ELSE 4
+			END) salary_difference) salary_trend
+WHERE salary_increasing <> "-"
+GROUP BY salary_increasing;
         
         
         
