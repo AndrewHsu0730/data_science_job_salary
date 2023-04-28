@@ -139,7 +139,7 @@ GROUP BY company_location
 ORDER BY location_count DESC;
 
 ALTER TABLE data_science_job_salary
-ADD COLUMN continent VARCHAR(20) AFTER company_location;
+ADD COLUMN continent CHAR(2) AFTER company_location;
 
 UPDATE data_science_job_salary
 SET
@@ -183,7 +183,7 @@ WHERE
 
 
 
-#Q1: Does the average salary of different job roles increase as years go by?
+#Q1: Did the average salary of data science jobs increase as years went by?
 
 SELECT
 	work_year,
@@ -199,7 +199,7 @@ FROM
 	data_science_job_salary
 GROUP BY work_year;
 
-SELECT
+/*SELECT
 	*,
     CASE
 		WHEN salary_difference > 0 THEN "T"
@@ -242,15 +242,15 @@ FROM
 		ORDER BY job_title, work_year) salary_difference) salary_trend
 WHERE salary_increasing <> "-"
 GROUP BY salary_increasing
-ORDER BY salary_increasing DESC;
+ORDER BY salary_increasing DESC;*/
 
 
 
-#Q2: Is it true that the higher experience level employees have, the more they're paid in different job roles?
+#Q2: Is it true that the higher experience level employees had, the more they were paid in data science jobs?
 
 SELECT
 	experience_level,
-    COUNT(experience_level)
+    COUNT(experience_level) AS experience_level_count
 FROM
 	data_science_job_salary
 GROUP BY experience_level
@@ -264,7 +264,7 @@ ORDER BY
     
 SELECT
 	experience_level,
-    ROUND(AVG(salary_in_usd))
+    ROUND(AVG(salary_in_usd)) AS salary
 FROM
 	data_science_job_salary
 GROUP BY experience_level
@@ -276,7 +276,7 @@ ORDER BY
         ELSE 4
 	END;
 
-SELECT
+/*SELECT
 	*,
     CASE
 		WHEN salary_difference > 0 THEN "T"
@@ -318,7 +318,7 @@ FROM
         
 SELECT
 	salary_increasing,
-    COUNT(salary_increasing)
+    COUNT(salary_increasing) AS symbol_count
 FROM
 	(SELECT
 		*,
@@ -360,11 +360,39 @@ FROM
 				ELSE 4
 			END) salary_difference) salary_trend
 WHERE salary_increasing <> "-"
-GROUP BY salary_increasing;
+GROUP BY salary_increasing;*/
         
         
         
-#Q3: Which type of employees is given the highest salary in different job roles?
+#Q3: Which type of employees was given the highest salary in different job roles?
+
+SELECT
+	employment_type,
+    COUNT(employment_type) AS employment_type_count
+FROM
+	data_science_job_salary
+GROUP BY employment_type
+ORDER BY
+	CASE
+		WHEN employment_type = "PT" THEN 1
+        WHEN employment_type = "FT" THEN 2
+        WHEN employment_type = "CT" THEN 3
+		ELSE 4
+	END;
+    
+SELECT
+	employment_type,
+    ROUND(AVG(salary_in_usd)) AS salary
+FROM
+	data_science_job_salary
+GROUP BY employment_type
+ORDER BY
+	CASE
+		WHEN employment_type = "PT" THEN 1
+        WHEN employment_type = "FT" THEN 2
+        WHEN employment_type = "CT" THEN 3
+        ELSE 4
+	END;
 
 SELECT
 	job_title,
@@ -372,18 +400,85 @@ SELECT
 	ROUND(AVG(salary_in_usd)) AS salary
 FROM
 	data_science_job_salary
-GROUP BY job_title, employment_type
-ORDER BY job_title;
+GROUP BY
+	job_title,
+    employment_type
+ORDER BY
+	job_title,
+    CASE
+		WHEN employment_type = "PT" THEN 1
+        WHEN employment_type = "FT" THEN 2
+        WHEN employment_type = "CT" THEN 3
+        ELSE 4
+	END;
+
+SELECT
+	*
+FROM
+	(SELECT
+		job_title,
+		employment_type,
+		ROUND(AVG(salary_in_usd)) AS salary
+	FROM
+		data_science_job_salary
+	GROUP BY
+		job_title,
+		employment_type
+	ORDER BY
+		job_title,
+		CASE
+			WHEN employment_type = "PT" THEN 1
+			WHEN employment_type = "FT" THEN 2
+			WHEN employment_type = "CT" THEN 3
+			ELSE 4
+		END) salary
+WHERE (job_title, salary) IN
+	(SELECT
+		job_title,
+		MAX(salary) AS salary
+	FROM
+		(SELECT
+			job_title,
+			employment_type,
+			ROUND(AVG(salary_in_usd)) AS salary
+		FROM
+			data_science_job_salary
+		GROUP BY
+			job_title,
+			employment_type
+		ORDER BY
+			job_title,
+			CASE
+				WHEN employment_type = "PT" THEN 1
+				WHEN employment_type = "FT" THEN 2
+				WHEN employment_type = "CT" THEN 3
+				ELSE 4
+			END) salary
+	GROUP BY job_title);
 
 
 
-
-
-#Q4: Does working in companies or from home have a huge influence on employees' salary in different job roles?
+#Q4: Did working in companies or from home have a huge influence on employees' salary in different job roles?
 
 SELECT
 	remote_ratio,
-    ROUND(AVG(salary_in_usd))
+    COUNT(remote_ratio) AS ratio_count
+FROM
+	data_science_job_salary
+GROUP BY remote_ratio;
+
+SELECT
+	remote_ratio,
+	work_year,
+    COUNT(remote_ratio) AS ratio_count
+FROM
+	data_science_job_salary
+GROUP BY remote_ratio, work_year
+ORDER BY remote_ratio;
+
+SELECT
+	remote_ratio,
+    ROUND(AVG(salary_in_usd)) AS salary
 FROM
 	data_science_job_salary
 GROUP BY remote_ratio;
@@ -397,9 +492,69 @@ FROM
 GROUP BY job_title, remote_ratio
 ORDER BY job_title;
 
+SELECT
+	*
+FROM
+	(SELECT
+		job_title,
+		remote_ratio,
+		ROUND(AVG(salary_in_usd)) AS salary
+	FROM
+		data_science_job_salary
+	GROUP BY job_title, remote_ratio
+	ORDER BY job_title) salary
+WHERE (job_title, salary) IN
+	(SELECT
+		job_title,
+        MAX(salary)
+	FROM
+		(SELECT
+			job_title,
+			remote_ratio,
+			ROUND(AVG(salary_in_usd)) AS salary
+		FROM
+			data_science_job_salary
+		GROUP BY job_title, remote_ratio
+		ORDER BY job_title) salary
+	GROUP BY job_title
+    ORDER BY job_title);
+    
+SELECT
+    remote_ratio,
+    COUNT(remote_ratio) AS ratio_count
+FROM
+	(SELECT
+		*
+	FROM
+		(SELECT
+			job_title,
+			remote_ratio,
+			ROUND(AVG(salary_in_usd)) AS salary
+		FROM
+			data_science_job_salary
+		GROUP BY job_title, remote_ratio
+		ORDER BY job_title) salary
+	WHERE (job_title, salary) IN
+		(SELECT
+			job_title,
+			MAX(salary)
+		FROM
+			(SELECT
+				job_title,
+				remote_ratio,
+				ROUND(AVG(salary_in_usd)) AS salary
+			FROM
+				data_science_job_salary
+			GROUP BY job_title, remote_ratio
+			ORDER BY job_title) salary
+		GROUP BY job_title
+		ORDER BY job_title)) highest_salary
+GROUP BY remote_ratio
+ORDER BY remote_ratio;
 
 
-#Q5: In which continent an employee works can earn the highest salary?
+
+#Q5: Which continent gave people better salary in different job roles?
 
 SELECT
 	continent,
@@ -418,42 +573,83 @@ GROUP BY continent;
 SELECT
 	job_title,
     continent,
-    ROUND(AVG(salary_in_usd))
+    ROUND(AVG(salary_in_usd)) AS salary
 FROM
 	data_science_job_salary
 GROUP BY job_title, continent
 ORDER BY job_title;
 
+SELECT
+	*
+FROM
+	(SELECT
+		job_title,
+		continent,
+		ROUND(AVG(salary_in_usd)) AS salary
+	FROM
+		data_science_job_salary
+	GROUP BY job_title, continent
+	ORDER BY job_title) salary
+WHERE (job_title, salary) IN
+	(SELECT
+		job_title,
+        MAX(salary)
+	FROM
+		(SELECT
+			job_title,
+			continent,
+			ROUND(AVG(salary_in_usd)) AS salary
+		FROM
+			data_science_job_salary
+		GROUP BY job_title, continent
+		ORDER BY job_title) salary
+	GROUP BY job_title
+    ORDER BY job_title);
 
 
-#Q6: Do employees in bigger companies earn more money?
+
+#Q6: Compared with local residents, did people from other countries earn less money in data science jobs?
+
+SELECT
+	COUNT(*) AS local_employee_count
+FROM
+	data_science_job_salary
+WHERE employee_residence = company_location;
+
+SELECT
+	COUNT(*) AS foreign_employee_count
+FROM
+	data_science_job_salary
+WHERE employee_residence <> company_location;
+
+SELECT
+	ROUND(AVG(salary_in_usd)) local_employee_salary
+FROM
+	data_science_job_salary
+WHERE employee_residence = company_location;
+	
+SELECT
+	ROUND(AVG(salary_in_usd)) AS foreign_employee_salary
+FROM
+	data_science_job_salary
+WHERE employee_residence <> company_location;
+
+
+
+#Q7: Did employees in bigger companies earn more money in data science jobs?
 
 SELECT
 	company_size,
-    ROUND(AVG(salary_in_usd))
+    COUNT(company_size) AS company_size_count
 FROM
 	data_science_job_salary
 GROUP BY company_size
-ORDER BY
-	CASE
-		WHEN company_size = "S" THEN 1
-        WHEN company_size = "M" THEN 2
-        ELSE 3
-	END;
-    
+ORDER BY company_size;
+
 SELECT
-	job_title,
-    company_size,
-    ROUND(AVG(salary_in_usd))
+	company_size,
+    ROUND(AVG(salary_in_usd)) AS salary
 FROM
 	data_science_job_salary
-GROUP BY
-	job_title,
-    company_size
-ORDER BY
-	job_title,
-    CASE
-		WHEN company_size = "S" THEN 1
-        WHEN company_size = "M" THEN 2
-        ELSE 3
-	END;
+GROUP BY company_size
+ORDER BY company_size;
