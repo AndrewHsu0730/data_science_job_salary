@@ -1,4 +1,4 @@
-CREATE SCHEMA IF NOT EXISTS data_science_job_salary; 
+CREATE SCHEMA IF NOT EXISTS data_science_job_salary;
 USE data_science_job_salary;
 
 CREATE TABLE IF NOT EXISTS data_science_job_salary(
