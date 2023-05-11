@@ -1,3 +1,5 @@
+# Load data into the table and remove unnecessary columns.
+
 CREATE SCHEMA IF NOT EXISTS data_science_job_salary;
 USE data_science_job_salary;
 
@@ -35,6 +37,8 @@ DROP COLUMN salary,
 DROP COLUMN salary_currency;
 
 
+
+# Reduce the number of job titles by putting similar titles into one category.
 
 SELECT
 	job_title,
@@ -130,6 +134,8 @@ WHERE
     
     
     
+# Add the Continent column to the table.
+
 SELECT
 	company_location,
 	COUNT(company_location) AS location_count
