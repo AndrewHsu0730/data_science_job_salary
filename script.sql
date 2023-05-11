@@ -1,4 +1,4 @@
-# Load data into the table and remove unnecessary columns. 
+# Load data into the table and remove unnecessary columns.
 
 CREATE SCHEMA IF NOT EXISTS data_science_job_salary;
 USE data_science_job_salary;
