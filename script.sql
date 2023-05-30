@@ -483,7 +483,7 @@ WHERE (job_title, salary) IN
 
 
 
-#Q6: Compared with local residents, did people from other countries earn less money in data science jobs?
+#Q6: Compared with local employees, did employees from foreign countries earn less money in data science jobs?
 
 SELECT
 	COUNT(*) AS local_employee_count
@@ -496,6 +496,19 @@ SELECT
 FROM
 	data_science_job_salary
 WHERE employee_residence <> company_location;
+
+SELECT
+	remote_ratio,
+    COUNT(remote_ratio) AS foreign_employee_count
+FROM
+	(SELECT
+		remote_ratio,
+		employee_residence,
+		company_location
+	FROM
+		data_science_job_salary
+	WHERE employee_residence <> company_location) foreign_employee
+GROUP BY remote_ratio;
 
 SELECT
 	ROUND(AVG(salary_in_usd)) local_employee_salary
