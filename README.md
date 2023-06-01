@@ -1,5 +1,5 @@
 ## Introduction
-In this technological era, an increasing popularity of IT-related jobs can be felt. For people who are keen to join the IT family and land a data science job to work with data, but at the same time curious about the estimated amount of salary in different job roles, this project aims at showing salary trend in every role to help people make better decisions when choosing their future career.
+In this technological era, an increasing popularity of IT-related jobs can be felt. For people who are keen to join the IT family and land a data science job to work with data, this project aims at showing salary pattern and more important information in this field to help people make better decisions when choosing their future career.
 ## Data
 The data used in this project is from a dataset downloaded in Kaggle called data science job salaries. The link to the dataset is as follows:
 
